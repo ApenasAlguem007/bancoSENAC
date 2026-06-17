@@ -4,145 +4,112 @@ const clientes = [
     { conta: "1002", senha: "123", nome: "Nicolas Silva", saldo: 1500 },
     { conta: "1003", senha: "123", nome: "Ana Maria", saldo: 3000 },
     { conta: "1004", senha: "123", nome: "Bruno Costa", saldo: 500 },
-    { conta: "1005", senha: "123", nome: "Carla Souza", saldo: 10000, status: "bloqueado" }
+    { conta: "1005", senha: "123", nome: "Carla Souza", saldo: 10000 }
 ];
 
-let usuarioLogado = null;
+document.querySelector('#form-registro').addEventListener('submit', function(event) {
+    // CRITÉRIO 1: Impedir o envio padrão do formulário
+    event.preventDefault(); 
 
-// 2. Seleção de Elementos (DOM)
-const secaoLogin = document.querySelector('#login-section');
-const secaoPainel = document.querySelector('#painel-section');
-const campoSaldo = document.querySelector('#saldo-valor');
-const boasVindas = document.querySelector('#boas-vindas');
+    // 1. Captura dos Elementos do DOM
+    const campos = {
+        nome: document.querySelector('#reg-nome'),
+        email: document.querySelector('#reg-email'),
+        senha: document.querySelector('#reg-senha'),
+        saldo: document.querySelector('#reg-saldo'),
+        cpf: document.querySelector('#reg-cpf'),
+        endereco: document.querySelector('#reg-endereco'),
+        complemento: document.querySelector('#reg-complemento'),
+        cep: document.querySelector('#reg-cep'),
+        cidade: document.querySelector('#reg-cidade'),
+        estado: document.querySelector('#reg-estado'),
+        celular: document.querySelector('#reg-celular')
+    };
 
-// 3. Funções de Interface
-function atualizarInterface() {
-    campoSaldo.textContent = `R$ ${usuarioLogado.saldo.toFixed(2)}`;
-    boasVindas.textContent = `Olá, ${usuarioLogado.nome}`;
-}
+    let formValido = true;
 
-// 4. Eventos de Login
-document.querySelector('#btn-login').addEventListener('click', () => {
-    const numConta = document.querySelector('#input-conta').value;
-    const senha = document.querySelector('#input-senha').value;
-
-    // Busca o cliente que atende às duas condições
-    usuarioLogado = clientes.find(c => c.conta === numConta && c.senha === senha);
-
-    if (usuarioLogado) {
-        secaoLogin.style.display = 'none';
-        secaoPainel.style.display = 'block';
-        atualizarInterface();
-    } else {
-        document.querySelector('#login-erro').style.display = 'block';
-    }
-});
-/**
-document.querySelector('#btn-depositar').addEventListener('click', () => {
-    const valor = parseFloat(document.querySelector('#valor-op').value);
-
-    if (valor > 0) {
-        usuarioLogado.saldo += valor; 
-        atualizarInterface();
-        alert("Depósito realizado!");
-    } else {
-        alert("Digite um valor válido.");
-    }
-});
-
-document.querySelector('#btn-sacar').addEventListener('click', () => {
-    const valor = parseFloat(document.querySelector('#valor-op').value);
-
-    if (valor > 0 && valor <= usuarioLogado.saldo) {
-        usuarioLogado.saldo -= valor;
-        atualizarInterface();
-        alert("Saque realizado com sucesso!");
-    } else {
-        alert("Saldo insuficiente ou valor inválido.");
-    }
-});
-*/
-
-document.querySelector('.operacoes').addEventListener('click', (e) => {
-
-    if (e.target.tagName !== 'BUTTON') return;
-    const idBotao = e.target.id;
-    const valor = parseFloat(document.querySelector('#valor-op').value);
-
-    if (idBotao === 'btn-depositar') {
-        if (valor > 0) {
-            usuarioLogado.saldo += valor;
-            atualizarInterface();
-            alert("Depósito realizado!");
+    // CRITÉRIO 3: Função de Feedback Visual Obrigatório
+    function validarCampo(input, condicaoValida) {
+        if (!condicaoValida) {
+            input.style.border = '2px solid red';
+            formValido = false;
         } else {
-            alert("Valor inválido para depósito.");
+            input.style.border = ''; // Retorna ao estado normal
         }
     }
 
-    else if (idBotao === 'btn-sacar') {
-        if (valor > 0 && valor <= usuarioLogado.saldo) {
-            usuarioLogado.saldo -= valor;
-            atualizarInterface();
-            alert("Saque realizado!");
-        } else {
-            alert("Saldo insuficiente ou valor inválido.");
-        }
-    }
-});
-
-/**document.querySelector('#btn-transferir').addEventListener('click', () => {
-    const valor = parseFloat(document.querySelector('#valor-op').value);
-    const contaDest = document.querySelector('#conta-destino').value;
+    // CRITÉRIO 2: Lógica de Validação (Client-Side e RegEx)
     
-    const destino = clientes.find(c => c.conta === contaDest);
+    // Campos que não podem ser vazios
+    validarCampo(campos.nome, campos.nome.value.trim() !== '');
+    validarCampo(campos.endereco, campos.endereco.value.trim() !== '');
+    validarCampo(campos.complemento, campos.complemento.value.trim() !== '');
+    validarCampo(campos.cidade, campos.cidade.value.trim() !== '');
+    validarCampo(campos.estado, campos.estado.value.trim() !== '');
 
-    if (!destino) {
-        alert("Erro: Conta de destino inexistente!");
-        return; // O 'return' para a função aqui mesmo
+    // Validação de E-mail (RegEx)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    validarCampo(campos.email, emailRegex.test(campos.email.value.trim()));
+
+    // Validação de Senha (Mínimo 6 caracteres)
+    validarCampo(campos.senha, campos.senha.value.length >= 6);
+
+    // Validação de Saldo (Numérico >= 0)
+    const saldoValor = parseFloat(campos.saldo.value);
+    validarCampo(campos.saldo, !isNaN(saldoValor) && saldoValor >= 0);
+
+    // Validação de CPF (11 dígitos, com ou sem pontuação)
+    const cpfLimpo = campos.cpf.value.replace(/\D/g, ''); // Remove tudo que não é número
+    validarCampo(campos.cpf, cpfLimpo.length === 11);
+
+    // Validação de CEP (8 dígitos, com ou sem hífen)
+    const cepLimpo = campos.cep.value.replace(/\D/g, '');
+    validarCampo(campos.cep, cepLimpo.length === 8);
+
+    // Validação de Celular (DDD + 9 dígitos = 11 números no total)
+    const celularLimpo = campos.celular.value.replace(/\D/g, '');
+    validarCampo(campos.celular, celularLimpo.length === 11 || celularLimpo.length === 10);
+
+    // Se alguma validação falhou, interrompe a execução aqui (Testes 2 - Falha Forçada)
+    if (!formValido) {
+        console.warn("Validação falhou. Corrija os campos em vermelho.");
+        return; 
     }
 
-    if (valor > usuarioLogado.saldo) {
-        alert("Erro: Saldo insuficiente para transferência.");
-        return;
-    }
+    // Estruturação do Objeto Exatamente como a API espera
+    const dadosCliente = {
+        email: campos.email.value.trim(),
+        senha: campos.senha.value,
+        saldo: saldoValor,
+        nome: campos.nome.value.trim(),
+        cpf: cpfLimpo, // Enviando apenas os 11 números conforme exemplo
+        endereco: campos.endereco.value.trim(),
+        complemento: campos.complemento.value.trim(),
+        cep: campos.cep.value.trim(),
+        cidade: campos.cidade.value.trim(),
+        estado: campos.estado.value.trim(),
+        celular: campos.celular.value.trim()
+    };
 
-    usuarioLogado.saldo -= valor;
-    destino.saldo += valor;
-    atualizarInterface();
-    alert(`Sucesso! R$ ${valor.toFixed(2)} enviado para ${destino.nome}`);
-});
-*/
-
-document.querySelector('#btn-transferir').addEventListener('click', () => {
-    try {
-        const valor = parseFloat(document.querySelector('#valor-op').value);
-        const contaDest = document.querySelector('#conta-destino').value;
-        const destino = clientes.find(c => c.conta === contaDest);
-
-        if (!destino) throw new Error("Conta de destino inexistente.");
-        if (valor > usuarioLogado.saldo) throw new Error("Saldo insuficiente.");
-        if (valor <= 0) throw new Error("Valor inválido.");
-
-        usuarioLogado.saldo -= valor;
-        destino.saldo += valor;
-        atualizarInterface();
-        alert("Transferência realizada com sucesso!");
-
-    } catch (erro) {
-        alert("Falha na transação: " + erro.message);
-    }
-});
-
-document.querySelector('#container').addEventListener('click', (e) => {
-
-    if (usuarioLogado && usuarioLogado.status === "bloqueado") {
-        if (e.target.closest('.operacoes')) {
-            alert("CONTA BLOQUEADA: Operação cancelada por restrição da Receita Federal.");
-            e.stopPropagation();
+    // CRITÉRIO 4: Requisição Assíncrona (Fetch API - POST)
+    fetch('https://senac-bank-api.dennislopes.com.br/banco/clientes', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json' // Cabeçalho obrigatório
+        },
+        body: JSON.stringify(dadosCliente) // Convertendo o objeto para JSON
+    })
+    .then(response => {
+        if (response.ok || response.status === 201) {
+            alert('Cliente registrado com sucesso!');
+            document.querySelector('#form-registro').reset(); // Limpa o formulário
+        } else {
+            alert('Erro ao registrar. O servidor recusou os dados.');
         }
-    }
-}, true);
-
-document.querySelector('#btn-sair').addEventListener('click', () => {
-    location.reload(); // Reinicia o app
+    })
+    .catch(error => {
+        console.error('Erro na requisição (Network):', error);
+        alert('Erro de conexão com a API.');
+    });
 });
+
